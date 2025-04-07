@@ -1,0 +1,34 @@
+body{
+    margin:10px ;
+}
+/* common styles */
+.matrix{
+    height: 0px ;
+    color: #cbcbcb ;
+    background: #11122b ;
+    display: flex ;
+    justify-content: space-between ;
+    align-items:center;
+    padding: 60px 40px 60px 40px ;
+    
+}
+.right-column{
+    display: flex;
+    align-items:center;
+}
+.left-column{
+    display: flex;
+    align-items: center;
+}
+.icons2{
+    margin-right:15px;
+}
+.icon{
+    margin-right:15px;
+}
+.icon i{
+    font-size:2em;
+}
+.icons2 i{
+    font-size:2em;
+}
