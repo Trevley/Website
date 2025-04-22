@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>MATRIX TECH WhatsApp Bot</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0d0d0d;
+    color: #00ffea;
+  }
+  header {
+    text-align: center;
+    padding: 60px 20px 30px;
+    background: #1a1a1a;
+  }
+  header img {
+    width: 120px;
+    border-radius: 50%;
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-size: 3em;
+    color: #00ffff;
+  }
+  header p {
+    font-size: 1.2em;
+    font-weight: 500;
+  }
+  #clock {
+    font-size: 1.2em;
+    margin-top: 10px;
+  }
+  section {
+    background: #1a1a1a;
+    padding: 30px;
+    margin: 20px auto;
+    border-radius: 15px;
+    max-width: 850px;
+    text-align: center;
+  }
+  h2 {
+    color: #00ff88;
+  }
+  .btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #00ff88;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: none;
+    background: #333;
+    color: #00ffea;
+  }
+  .form-section {
+    display: none;
+  }
+  footer {
+    text-align: center;
+    padding: 20px;
+    background: #1a1a1a;
+    margin-top: 30px;
+    color: #777;
+  }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+
+<div style="position:fixed;top:20px;right:20px;z-index:1000;">
+  <button onclick="document.getElementById('bgMusic').muted = false" style="padding:8px;border:none;border-radius:50%;background:#00ff88;color:#000;">
+    <i class="fas fa-volume-up"></i>
+  </button>
+  <button onclick="document.getElementById('bgMusic').muted = true" style="padding:8px;border:none;border-radius:50%;background:#ff0066;color:#fff;margin-left:5px;">
+    <i class="fas fa-volume-mute"></i>
+  </button>
+</div>
+
+<header>
+  <img src="logo1.jpg" alt="PK TECH Logo"/>
+  <h1>MATRIX TECH WhatsApp Bot</h1>
+  <p>Get yours now for only <strong>KES 100</strong></p>
+  <div id="clock"></div>
+</header>
+
+<section>
+  <h2>Place Your Order</h2>
+  <button class="btn" onclick="showForm()">PLACE ORDER</button>
+</section>
+
+<section class="form-section" id="formSection">
+  <h2>Fill Your Order Details</h2>
+  <form onsubmit="showConfirmation(event)">
+    <input type="text" placeholder="Your Name" required/>
+    <input type="text" placeholder="WhatsApp Number" required/>
+    <input type="email" placeholder="Email (Optional)"/>
+    <textarea rows="4" placeholder="Custom Notes or Request..."></textarea>
+    <button class="btn" type="submit">Continue</button>
+  </form>
+</section>
+
+<section>
+  <h2>Source Code</h2>
+  <p><strong>MATRIX-XMD Bot:</strong></p>
+  <a href="https://github.com/Trevley/MATRIX-XMD" target="_blank">
+    <button class="btn">View MATRIX-XMD on GitHub</button>
+  </a>
+  <p><strong>MATRIX-XMD Bot:</strong></p>
+  <a href="https://github.com/Trevley/MATRIX-XMD" target="_blank">
+    <button class="btn" style="background:#00ffff;">View MATRIX-XMD on GitHub</button>
+  </a>
+</section>
+
+<section>
+  <audio id="bgMusic" autoplay loop muted>
+    <source src="https://www.dropbox.com/scl/fi/njez5eotagptmlawan1mu/lily_song.mp3?rlkey=3l5vlowduw7cxvh846c02tomu&amp;st=jpv59bat&amp;raw=1" type="audio/mpeg"/>
+    Your browser does not support the audio element.
+  </audio>
+</section>
+
+<section>
+  <h2>Connect with MATRIX TECH</h2>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin-top:20px;">
+    <a class="btn" href="https://wa.me/254791850627" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+    <a class="btn" href="https://t.me/matrix_tech254" style="background:#34ace0;" target="_blank"><i class="fab fa-telegram"></i> Telegram</a>
+    <a class="btn" href="https://www.instagram.com/quantum_.vibes?igsh=MTlwOXN5a2sycnA2bA==" style="background:#e1306c;" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
+    <a class="btn" href="https://www.facebook.com/share/15t9Sg4gg2/" style="background:#3b5998;" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
+    <a class="btn" href="https://www.youtube.com/@Pktech-1911" style="background:#ff0000;" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
+  </div>
+</section>
+
+<footer>
+  © 2025 MATRIX TECH | WhatsApp: +254791850627 | All rights reserved.
+</footer>
+
+<script>
+  function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    document.getElementById("clock").textContent = "Current Time: " + timeString;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  function showForm() {
+    document.getElementById("formSection").style.display = "block";
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function showConfirmation(e) {
+    e.preventDefault();
+    const newTab = window.open('', '_blank');
+    newTab.document.write(`
+      <html>
+      <head>
+        <title>Order Confirmed - MATRIX TECH</title>
+        <style>
+          body {
+            background-color: #0d0d0d;
+            color: #00ffea;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 50px;
+          }
+          .container {
+            background: #1a1a1a;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: auto;
+          }
+          h2 {
+            color: #00ff88;
+          }
+          p {
+            margin: 10px 0;
+          }
+          a {
+            display: inline-block;
+            margin: 10px auto;
+            padding: 15px;
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+          }
+          a:hover {
+            background: #00cc99;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>Payment Instructions</h2>
+          <p><strong>Send KES 100 to:</strong></p>
+          <p><strong>Number:</strong> 254729980068</p>
+          <p><strong>Name:</strong> Laura Nentaya</p>
+          <p>After payment, click below:</p>
+          <a href="https://wa.me/254791850627?text=Hi%2C+I+have+paid+KES+100+for+MATRIX+TECH+Bot" target="_blank">Confirm via WhatsApp</a>
+          <a href="https://matrix-md-verification.vercel.app" target="_blank">Go to Deployment</a>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    let firstInteraction = () => {
+      let music = document.getElementById('bgMusic');
+      if (music) {
+        music.muted = false;
+        music.play().catch(() => {});
+        document.removeEventListener('click', firstInteraction);
+      }
+    };
+    document.addEventListener('click', firstInteraction);
+  });
+</script>
+
+</body>
+</html>
