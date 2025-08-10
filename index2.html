@@ -1,0 +1,441 @@
+<!-- Save as matrixweb-full.html and open in your browser -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Matrixweb — Mini Netflix (Demo)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg:#0b0b0b; --surface:#111; --muted:#9aa4b2; --accent:#e50914;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#050506 0%,#0b0b0b 100%);color:#fff}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:linear-gradient(180deg,rgba(0,0,0,0.6),transparent);position:sticky;top:0;z-index:50}
+  .brand{display:flex;gap:12px;align-items:center;font-weight:700;font-size:20px}
+  .brand .logo{width:36px;height:36px;border-radius:4px;background:linear-gradient(45deg,#22d3ee,#22c55e);display:flex;align-items:center;justify-content:center;color:#000;font-weight:700}
+  .nav-right{display:flex;gap:10px;align-items:center}
+  input[type="search"]{background:#222;border:1px solid #222;padding:8px 12px;border-radius:6px;color:#fff;min-width:260px}
+  button{background:var(--accent);border:none;color:#fff;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff}
+  main{padding:18px 28px 80px}
+  /* banner */
+  .banner {position:relative;height:360px;border-radius:8px;overflow:hidden;margin-bottom:18px;background:#222}
+  .banner-slide{position:absolute;inset:0;background-size:cover;background-position:center;transform:translateX(100%);transition:transform .7s ease}
+  .banner-slide.active{transform:translateX(0)}
+  .banner-slide.prev{transform:translateX(-100%)}
+  .banner-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0) 40%, rgba(5,5,5,0.9) 90%);display:flex;align-items:flex-end;padding:28px}
+  .banner-title{font-size:28px;font-weight:800;margin-bottom:8px}
+  .banner-meta{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:14px}
+  .banner-controls{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;pointer-events:none}
+  .banner-btn{pointer-events:all;background:rgba(0,0,0,0.45);border:0;color:#fff;font-size:26px;padding:8px;border-radius:999px;cursor:pointer}
+  /* filters */
+  .filters{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  select, .small-input{background:#111;border:1px solid #222;padding:8px;border-radius:8px;color:#fff}
+  /* rows */
+  .row{margin:14px 0}
+  .row-title{font-weight:700;margin:8px 4px}
+  .row-cards{display:flex;gap:12px;overflow:auto;padding:8px 4px}
+  .card{min-width:200px;max-width:200px;border-radius:8px;overflow:hidden;background:#111;position:relative;cursor:pointer;flex:0 0 200px;transition:transform .15s}
+  .card:hover{transform:translateY(-6px) scale(1.03)}
+  .card img{width:100%;height:280px;display:block;object-fit:cover}
+  .card .meta{padding:8px;font-size:14px}
+  .badge{position:absolute;left:8px;top:8px;background:rgba(0,0,0,0.6);padding:6px 8px;border-radius:4px;font-weight:700}
+  .locked{background:linear-gradient(90deg,rgba(0,0,0,0.6),rgba(0,0,0,0.3));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px}
+  /* hover preview tiny video */
+  .preview-video{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:none}
+  .card.previewing .preview-video{display:block}
+  /* modal player */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
+  .modal.show{opacity:1;pointer-events:all}
+  .player{width:90%;max-width:1000px;background:#000;border-radius:8px;overflow:hidden}
+  .player video{width:100%;height:560px;background:#000;display:block}
+  .player .controls{display:flex;justify-content:space-between;padding:8px;background:#0b0b0b;color:var(--muted)}
+  .urow{display:flex;gap:8px;align-items:center}
+  /* admin form */
+  .admin-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+  .small{font-size:13px;padding:6px}
+  /* responsive */
+  @media(max-width:900px){ .banner{height:220px} .card img{height:160px} .player video{height:320px} input[type="search"]{min-width:160px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="logo">MW</div>Matrixweb</div>
+  <div class="nav-right">
+    <input type="search" id="topSearch" placeholder="Search movies..." oninput="renderAllRows()" />
+    <select id="topCategory" onchange="renderAllRows()">
+      <option value="">All categories</option>
+    </select>
+    <div id="authButtons">
+      <button class="ghost" onclick="showLogin()">Login</button>
+      <button onclick="showRegister()">Sign up</button>
+    </div>
+    <div id="userMenu" style="display:none;align-items:center;gap:8px;">
+      <span id="userBadge" style="font-weight:700"></span>
+      <button class="ghost" onclick="openAccount()">Account</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Banner -->
+  <div id="banner" class="banner" aria-hidden="false"></div>
+
+  <!-- filters (also below header) -->
+  <div class="filters">
+    <input class="small-input" id="searchBox" placeholder="Search titles..." oninput="renderAllRows()" />
+    <select id="categoryFilter" onchange="renderAllRows()"><option value="">All categories</option></select>
+    <div style="flex:1"></div>
+    <div id="roleHint" style="color:var(--muted);font-size:13px"></div>
+  </div>
+
+  <!-- rows of categories (dynamic) -->
+  <div id="rowsContainer"></div>
+
+  <!-- Admin panel (demo) -->
+  <div id="adminPanel" style="display:none;margin-top:18px;background:linear-gradient(180deg,#0f0f10,#0b0b0b);padding:12px;border-radius:8px">
+    <h3 style="margin:0 0 8px 0">Admin — Add Movie (demo)</h3>
+    <div class="admin-form">
+      <input id="m_title" placeholder="Title" class="small">
+      <input id="m_image" placeholder="Cover image URL" class="small">
+      <input id="m_trailer" placeholder="Trailer (mp4) URL (optional)" class="small">
+      <input id="m_link" placeholder="Download link (or file url)" class="small">
+      <select id="m_cat" class="small">
+        <option>Action</option><option>Comedy</option><option>Drama</option><option>Sci-Fi</option><option>Horror</option>
+      </select>
+      <select id="m_access" class="small">
+        <option value="free">Free</option><option value="premium">Premium</option>
+      </select>
+      <button onclick="adminAddMovie()" style="grid-column:span 2">Upload movie (demo)</button>
+    </div>
+    <p style="color:var(--muted);font-size:13px;margin-top:8px">Demo only: uploads store data in your browser's localStorage. Replace with server API + cloud storage for production.</p>
+  </div>
+</main>
+
+<!-- player modal -->
+<div id="modal" class="modal" onclick="closeModal(event)">
+  <div class="player" onclick="event.stopPropagation()">
+    <video id="modalVideo" controls crossorigin playsinline></video>
+    <div class="controls">
+      <div class="urow"><strong id="modalTitle"></strong></div>
+      <div class="urow"><span id="modalInfo"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- login/register/account modals (simple) -->
+<div id="loginBox" style="position:fixed;right:20px;bottom:20px;background:#111;padding:12px;border-radius:8px;display:none;z-index:220">
+  <h4 style="margin:0 0 8px 0">Login</h4>
+  <input id="li_user" placeholder="username" class="small"><br>
+  <input id="li_pass" placeholder="password" type="password" class="small"><br>
+  <button onclick="doLogin()">Login</button>
+  <button class="ghost" onclick="hideLogin()">Cancel</button>
+</div>
+
+<div id="registerBox" style="position:fixed;right:20px;bottom:20px;background:#111;padding:12px;border-radius:8px;display:none;z-index:220">
+  <h4 style="margin:0 0 8px 0">Register</h4>
+  <input id="rg_user" placeholder="username" class="small"><br>
+  <input id="rg_pass" placeholder="password" type="password" class="small"><br>
+  <select id="rg_role" class="small"><option value="user">User</option><option value="premium">Premium</option></select><br>
+  <button onclick="doRegister()">Create</button>
+  <button class="ghost" onclick="hideRegister()">Cancel</button>
+</div>
+
+<div id="accountBox" style="position:fixed;right:20px;bottom:20px;background:#111;padding:12px;border-radius:8px;display:none;z-index:220">
+  <h4 style="margin:0 0 8px 0">Account</h4>
+  <div><strong id="acc_user"></strong> — <span id="acc_role"></span></div>
+  <div style="margin-top:8px">
+    <button onclick="makePremium()">Upgrade to Premium (demo)</button>
+    <button class="ghost" onclick="closeAccount()">Close</button>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:8px">In production, integrate payments and set premium server-side.</p>
+</div>
+
+<script>
+/* -------------------------
+   Demo data + persistence
+   ------------------------- */
+const USERS_KEY = 'mw_users_v1';
+const MOVIES_KEY = 'mw_movies_v1';
+let users = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+let movies = JSON.parse(localStorage.getItem(MOVIES_KEY) || '[]');
+let currentUser = null;
+
+/* bootstrap with demo accounts & movies if empty */
+(function bootstrap(){
+  if(!users.length){
+    users = [
+      {id:'u_admin',user:'admin',pass:'admin123',role:'admin'},
+      {id:'u_user',user:'user',pass:'user123',role:'user'},
+      {id:'u_premium',user:'premium',pass:'premium123',role:'premium'}
+    ];
+    localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  }
+  if(!movies.length){
+    movies = [
+      // These are placeholder images and trailers — replace with your own legal content
+      {id:'m1',title:'Public Domain Short',cat:'Drama',image:'https://picsum.photos/id/1018/800/450',trailer:'',link:'#',access:'free',year:1930},
+      {id:'m2',title:'Sci-Fi Preview',cat:'Sci-Fi',image:'https://picsum.photos/id/1025/800/450',trailer:'',link:'#',access:'premium',year:2021},
+      {id:'m3',title:'Action Blast',cat:'Action',image:'https://picsum.photos/id/1015/800/450',trailer:'',link:'#',access:'free',year:2019},
+      {id:'m4',title:'Comedy Night',cat:'Comedy',image:'https://picsum.photos/id/1005/800/450',trailer:'',link:'#',access:'free',year:2018}
+    ];
+    localStorage.setItem(MOVIES_KEY,JSON.stringify(movies));
+  }
+})();
+
+/* -------------------------
+   utilities
+   ------------------------- */
+function saveUsers(){ localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+function saveMovies(){ localStorage.setItem(MOVIES_KEY, JSON.stringify(movies)); }
+function q(id){return document.getElementById(id);}
+
+function showLogin(){ q('loginBox').style.display='block'; q('registerBox').style.display='none'; q('accountBox').style.display='none' }
+function hideLogin(){ q('loginBox').style.display='none' }
+function showRegister(){ q('registerBox').style.display='block'; q('loginBox').style.display='none'; q('accountBox').style.display='none' }
+function hideRegister(){ q('registerBox').style.display='none' }
+function openAccount(){ q('accountBox').style.display='block'; q('loginBox').style.display='none'; q('registerBox').style.display='none'; q('acc_user').innerText = currentUser.user; q('acc_role').innerText = currentUser.role }
+function closeAccount(){ q('accountBox').style.display='none' }
+
+/* -------------------------
+   auth / account
+   ------------------------- */
+function doLogin(){
+  const u = q('li_user').value.trim(), p = q('li_pass').value;
+  const found = users.find(x => x.user===u && x.pass===p);
+  if(!found){ alert('Invalid login (demo)'); return; }
+  currentUser = found; onLogin();
+}
+function doRegister(){
+  const u = q('rg_user').value.trim(), p = q('rg_pass').value, role = q('rg_role').value;
+  if(!u || !p) { alert('Fill details'); return; }
+  if(users.find(x=>x.user===u)){ alert('Username taken'); return; }
+  const newU = {id:'u'+Date.now(), user:u, pass:p, role:role};
+  users.unshift(newU); saveUsers();
+  currentUser = newU; onLogin();
+}
+function onLogin(){
+  hideLogin(); hideRegister(); q('authButtons').style.display='none'; q('userMenu').style.display='flex';
+  q('userBadge').innerText = currentUser.user; q('roleHint').innerText = currentUser.role==='premium' ? 'Premium member' : (currentUser.role==='admin'?'Admin':'Free member');
+  if(currentUser.role==='admin') q('adminPanel').style.display='block'; else q('adminPanel').style.display='none';
+  renderAllRows(); renderBanner();
+}
+function logout(){ currentUser=null; q('authButtons').style.display='flex'; q('userMenu').style.display='none'; q('adminPanel').style.display='none'; q('roleHint').innerText=''; renderAllRows(); renderBanner(); }
+function makePremium(){ if(!currentUser){ alert('Login first'); return } currentUser.role='premium'; const u = users.find(x=>x.id===currentUser.id); if(u) u.role='premium'; saveUsers(); openAccount(); renderAllRows(); renderBanner(); alert('Upgraded to premium (demo)') }
+
+/* -------------------------
+   admin add movie (demo)
+   ------------------------- */
+function adminAddMovie(){
+  if(!currentUser || currentUser.role!=='admin'){ alert('admin only'); return }
+  const title = q('m_title').value.trim();
+  const image = q('m_image').value.trim();
+  const trailer = q('m_trailer').value.trim();
+  const link = q('m_link').value.trim();
+  const cat = q('m_cat').value;
+  const access = q('m_access').value;
+  if(!title || !image || !link){ alert('fill title, image, link'); return }
+  const m = {id:'m'+Date.now(), title, image, trailer, link, cat, access, year:(new Date()).getFullYear()};
+  movies.unshift(m); saveMovies(); renderAllRows(); renderBanner(); alert('Uploaded (demo). Replace with a server upload in production.') 
+}
+
+/* -------------------------
+   UI: banner + rows + rendering
+   ------------------------- */
+let bannerTimer = null;
+let bannerIndex = 0;
+
+function renderBanner(){
+  const container = q('banner');
+  container.innerHTML='';
+  const visible = movies.slice(0,6);
+  if(!visible.length){ container.style.display='none'; return } else container.style.display='block';
+  visible.forEach((m, idx) => {
+    const slide = document.createElement('div');
+    slide.className='banner-slide' + (idx===0?' active':'');
+    slide.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.15),rgba(0,0,0,0.5)), url('${m.image}')`;
+    slide.innerHTML = `<div class="banner-overlay">
+      <div>
+        <div class="banner-title">${escapeHtml(m.title)}</div>
+        <div class="banner-meta">${m.cat} • ${m.year} • ${m.access==='premium'?'<strong style="color:gold">Premium</strong>':'Free'}</div>
+        <div style="margin-top:12px">
+          <button onclick="playMovie('${m.id}')">Play</button>
+          <button class="ghost" onclick="openTrailer('${m.id}')">Trailer</button>
+        </div>
+      </div>
+    </div>`;
+    container.appendChild(slide);
+  });
+
+  // controls
+  const controls = document.createElement('div');
+  controls.className = 'banner-controls';
+  controls.innerHTML = `<button class="banner-btn" onclick="changeBanner(-1)" aria-label="prev">&#8249;</button>
+                        <button class="banner-btn" onclick="changeBanner(1)" aria-label="next">&#8250;</button>`;
+  container.appendChild(controls);
+
+  bannerIndex = 0;
+  if(bannerTimer) clearInterval(bannerTimer);
+  bannerTimer = setInterval(()=> changeBanner(1), 5000);
+}
+
+function changeBanner(dir){
+  const slides = document.querySelectorAll('.banner-slide');
+  if(!slides.length) return;
+  slides[bannerIndex].classList.remove('active');
+  bannerIndex = (bannerIndex + dir + slides.length) % slides.length;
+  slides[bannerIndex].classList.add('active');
+}
+
+/* rows grouped by category */
+function renderAllRows(){
+  const rows = q('rowsContainer');
+  rows.innerHTML='';
+  const search = (q('searchBox').value || q('topSearch').value || '').toLowerCase();
+  const categorySelection = q('categoryFilter').value || q('topCategory').value || '';
+  // build category list
+  const cats = Array.from(new Set(movies.map(m=>m.cat))).sort();
+  // populate both category controls
+  const cf = q('categoryFilter'), tc = q('topCategory');
+  cf.innerHTML = '<option value="">All categories</option>'; tc.innerHTML = '<option value="">All categories</option>';
+  cats.forEach(c=>{ cf.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`; tc.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`; });
+
+  // group movies into rows by category (filtered)
+  const grouped = {};
+  movies.forEach(m=>{
+    if(categorySelection && m.cat !== categorySelection) return;
+    if(search && !m.title.toLowerCase().includes(search)) return;
+    if(!grouped[m.cat]) grouped[m.cat]=[];
+    grouped[m.cat].push(m);
+  });
+  // also show a "Recommended" row (top newest)
+  const recommended = movies.filter(m => (search?m.title.toLowerCase().includes(search):true) && (categorySelection?m.cat===categorySelection:true)).slice(0,10);
+  if(recommended.length){
+    rows.appendChild(makeRow('Recommended', recommended));
+  }
+  Object.keys(grouped).forEach(cat=>{
+    rows.appendChild(makeRow(cat, grouped[cat]));
+  });
+}
+
+/* build one row element (cards) */
+function makeRow(title, arr){
+  const div = document.createElement('div'); div.className='row';
+  const h = document.createElement('div'); h.className='row-title'; h.innerText = title;
+  const cards = document.createElement('div'); cards.className='row-cards';
+  arr.forEach(m=>{
+    const c = document.createElement('div'); c.className='card'; c.dataset.id = m.id;
+    c.innerHTML = `
+      ${m.access==='premium' ? '<div class="badge">Premium</div>' : ''}
+      <img src="${m.image}" alt="${escapeHtml(m.title)}" loading="lazy">
+      <video class="preview-video" muted preload="metadata"></video>
+      <div class="meta"><strong>${escapeHtml(m.title)}</strong><div style="color:var(--muted);font-size:13px">${m.cat} • ${m.year}</div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button onclick="playMovie('${m.id}', event)">Play</button>
+          <button class="ghost" onclick="openTrailer('${m.id}', event)">Trailer</button>
+          <button class="ghost" onclick="downloadMovie('${m.id}', event)">Download</button>
+        </div>
+      </div>`;
+    // preview hover behaviour
+    c.addEventListener('mouseenter', ()=> startPreview(c, m));
+    c.addEventListener('mouseleave', ()=> stopPreview(c));
+    cards.appendChild(c);
+  });
+  div.appendChild(h); div.appendChild(cards);
+  return div;
+}
+
+/* preview: plays small muted trailer if available */
+function startPreview(card, movie){
+  if(!movie.trailer) return;
+  card.classList.add('previewing');
+  const vid = card.querySelector('.preview-video');
+  vid.src = movie.trailer;
+  vid.currentTime = 0;
+  vid.play().catch(()=>{ /* ignore play errors in demo */ });
+}
+function stopPreview(card){
+  card.classList.remove('previewing');
+  const vid = card.querySelector('.preview-video');
+  if(vid){ vid.pause(); vid.removeAttribute('src'); }
+}
+
+/* -------------------------
+   Play / Trailer / Download (access control)
+   ------------------------- */
+function findMovie(id){ return movies.find(m=>m.id===id) }
+
+function canAccess(movie){
+  if(movie.access!=='premium') return true;
+  if(!currentUser) return false;
+  return currentUser.role==='premium' || currentUser.role==='admin';
+}
+
+function playMovie(id, ev){
+  if(ev) ev.stopPropagation();
+  const m = findMovie(id);
+  if(!m) return;
+  if(!canAccess(m)){
+    if(confirm('This is premium content. Upgrade to premium?')) openAccount(); return;
+  }
+  openPlayer(m);
+}
+
+function openTrailer(id, ev){
+  if(ev) ev.stopPropagation();
+  const m = findMovie(id);
+  if(!m) return alert('No trailer available (demo)'); // or open player with trailer if exists
+  if(!m.trailer) return alert('Trailer URL not provided for this movie.');
+  openPlayer(m, true);
+}
+
+function downloadMovie(id, ev){
+  if(ev) ev.stopPropagation();
+  const m = findMovie(id);
+  if(!m) return;
+  if(!canAccess(m)){ if(confirm('Download requires premium. Upgrade?')) openAccount(); return; }
+  // demo: open link in new tab. In production, use signed URLs.
+  window.open(m.link || '#', '_blank');
+}
+
+/* Player modal */
+function openPlayer(movie, trailerOnly=false){
+  const modal = q('modal'); const v = q('modalVideo');
+  q('modalTitle').innerText = movie.title + (trailerOnly? ' — Trailer' : '');
+  q('modalInfo').innerText = `${movie.cat} • ${movie.year} • ${movie.access==='premium'?'Premium':'Free'}`;
+  const src = trailerOnly ? movie.trailer || movie.link : (movie.trailer || movie.link);
+  if(!src){ alert('No playable source provided for this movie (demo).'); return; }
+  v.src = src; v.currentTime = 0; v.muted = false; v.play().catch(()=>{});
+  modal.classList.add('show');
+}
+
+function closeModal(e){
+  if(e && e.target !== e.currentTarget) return;
+  const modal = q('modal'); const v = q('modalVideo');
+  v.pause(); v.removeAttribute('src');
+  modal.classList.remove('show');
+}
+
+/* banner trailer toggle — small helper */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+/* -------------------------
+   initial render
+   ------------------------- */
+function initUI(){
+  // hook top search/category to main
+  q('topSearch').addEventListener('input', ()=>{ q('searchBox').value = q('topSearch').value; renderAllRows(); });
+  q('topCategory').addEventListener('change', ()=>{ q('categoryFilter').value = q('topCategory').value; renderAllRows(); });
+  // show demo hint
+  q('roleHint').innerText = 'Not signed in — demo mode';
+  // render
+  renderAllRows(); renderBanner();
+  // if demo user exists auto-login none — keep guests
+}
+initUI();
+</script>
+</body>
+</html>
